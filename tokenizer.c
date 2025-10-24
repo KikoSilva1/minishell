@@ -17,6 +17,9 @@
 #include "structs.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <readline/readline.h>
+#include <readline/history.h>
+
 
 //Aspas simples '...' e duplas "..." formam um único token mesmo com espaços ou operadores,
 //mas enquanto "..." permite expansão de variáveis e escapes, '...' é totalmente literal.
@@ -52,10 +55,11 @@ size_t	get_quoted_size(char *line, char quote)
 	size_t size;
 
 	size = 0;
-	line++;
+	line++; //para passar a prmeira aspa a frente (so quero o conteudo)
 	while(*line != quote)
 	{
 		size++;
+		line++;
 	}
 	return(size);
 }
@@ -76,7 +80,7 @@ char *get_quoted_text(char *line,char quote)
 	char *str;
 	size = get_quoted_size(line,quote);//validar este size primeiro, pode ser 0 e assim n faco nada
 	str = malloc((size + 1)*sizeof(char));
-	ft_memcpy(str, line++, size);
+	ft_memcpy(str, ++line, size); //ando line um char para a frente para nao copiar a aspa inicial
 	str[size] = '\0';
 	return str;
 }
@@ -103,6 +107,7 @@ void	create_quoted_node(t_token **last_token, t_token **head, char *line, char q
 	is_expandable = 1;
 	if(is_single_quote(*line))
 		is_expandable = 0;
+
 	str = get_quoted_text(line,quote);
 	token = create_token(str, is_expandable);
 	append_token(head,last_token,token);
@@ -116,7 +121,7 @@ void	handle_quote(int *in_quote,char *line, int *i,t_token **last_node, t_token 
 	if(is_double_quote(*line))
 		*in_quote = 2;
 	create_quoted_node(last_node,head,line,*line);
-	*i = *i + get_quoted_size(line,*line) + 1; //passar a frente o tento dentro de quotes
+	*i = *i + get_quoted_size(line,*line) + 2; //passar a frente o tento dentro das quotes e das prprias quotes
  }
 int	is_space(char c)
 {
@@ -130,7 +135,7 @@ void	skip_spaces(char *line,int *i)
 		j++;
 	*i = *i + j;
 }
-
+//por agora o trata espacos e aspas;
 t_token	*tokenize(char* line)
 {
 	int	i;
@@ -141,6 +146,7 @@ t_token	*tokenize(char* line)
 	last_token = NULL;
 	head = NULL;
  	i = 0;
+
 
 	while(line[i] != 0)
 	{
@@ -159,21 +165,32 @@ t_token	*tokenize(char* line)
 int	main(void)
 {
 	char *line;
-	t_token *tokens;
+	t_token *head;
+	t_token *tmp;
 	int exit_status = 0;
 	while (1)
 	{
 		line = readline("minishell> ");
 		//add_history(line);
-		tokens = tokenize(line);
-		if (!tokens)
+		head = tokenize(line);
+		if (!head)
 		{
 			fprintf(stderr, "Erro ao tokenizar.\n");
 			free(line);
 			continue;
 		}
+		tmp = head;
+		while(tmp)
+		{
+			printf("Token: \"%s\" | Expandable: %d\n", tmp->value, tmp ->expandable);
+			tmp = tmp->next;
+		}
 		//free_tokens(tokens);
 		free(line);
 	}
-return exit_status;
+	return exit_status;
 }
+
+
+
+
