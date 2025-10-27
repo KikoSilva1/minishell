@@ -8,7 +8,9 @@ typedef enum e_token_type
 	REDIR_IN,    // <
 	REDIR_OUT,   // >
 	APPEND,      // >>
-	HEREDOC      // <<
+	HEREDOC,      // <<
+	OR,
+	AND,
 }	t_token_type;
 
 typedef struct s_token

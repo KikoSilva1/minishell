@@ -82,6 +82,8 @@ void	create_quoted_node(t_token **last_token, t_token **head, char *line, char q
 		is_expandable = 0;
 
 	str = get_quoted_text(line,quote);
+	if(ft_strlen(str) < 1) //neste caso nao crio token,
+		return;
 	token = create_token(str, WORD, is_expandable);
 	append_token(head,last_token,token);
 }
@@ -90,7 +92,7 @@ void	handle_quote(char *line, int *i,t_token **last_node, t_token **head)
 {
 	create_quoted_node(last_node,head,line,*line);
 	*i = *i + get_quoted_size(line,*line) + 2; //passar a frente o tento dentro das quotes e das prprias quotes
- }
+}
 
 void	skip_spaces(char *line,int *i)
 {
@@ -108,7 +110,7 @@ void	handle_word(char *line, int *i,t_token **last_token, t_token **head)
 	char	*str;
 
 	j = 1; //vou para o char seguinte apos a letra que encontrei
-	while(!is_operator(line[j]) && !is_space(line[j]) && line[j] != '\0')
+	while(!is_operator(&line[j]) && !is_space(line[j]) && line[j] != '\0') //validar a mudanca no is_operator
 	{
 		j++;
 	}
@@ -122,6 +124,75 @@ void	handle_word(char *line, int *i,t_token **last_token, t_token **head)
 	//atualizar i (posicao na line)
 	*i = *i + j;
 }
+
+void	handle_pipe_or_or(char *line, int *i, t_token **last_token, t_token **head) //em todas estas funcoes de handle, seja o que receber aqui sei que e' um operador valido basta me saber qual
+{
+	t_token *token;
+	char *str;
+
+	if(*(++line) == '|')
+	{
+		str = ft_strdup("||");
+		token = create_token(str, OR, 1);
+		append_token(head,last_token,token);
+		*i = *i + 2;
+	}
+	else
+	{
+		str = ft_strdup("|");
+		token = create_token(str, PIPE, 1);
+		append_token(head,last_token,token);
+		*i = *i + 1;
+	}
+}
+void	handle_and(char *line, int *i, t_token **last_token, t_token **head)
+{
+	t_token *token;
+	char *str;
+
+	if(*(++line) == '&') //esta verificacao pode ser redundante, confirmar
+	{
+		str = ft_strdup("&&"); //faco strdup porque ate agora todos os values dos tokens foram dinamicamente alocadas
+		token = create_token(str, OR, 1);
+		append_token(head,last_token,token);
+		*i = *i + 2;
+	}
+}
+void	handle_redin(char *line, int *i, t_token **last_token, t_token **head)
+{
+	t_token *token;
+	char *str;
+	if (*line == '<')
+	{
+		str = ft_strdup("<"); //faco strdup porque ate agora todos os values dos tokens foram dinamicamente alocadas
+		token = create_token(str, REDIR_IN, 1);
+		append_token(head,last_token,token);
+		*i = *i + 1;
+	}
+}
+
+void	handle_redap_or_redout(char *line, int *i, t_token **last_token, t_token **head)
+{	if(ft_strlen(str) < 1) //neste caso nao crio token,
+		return;
+	t_token *token;
+	char *str;
+
+	if(*(++line) == '>')
+	{
+		str = ft_strdup(">>");
+		token = create_token(str, APPEND, 1);
+		append_token(head,last_token,token);
+		*i = *i + 2;
+	}
+	else
+	{
+		str = ft_strdup(">");
+		token = create_token(str, REDIR_OUT, 1);
+		append_token(head,last_token,token);
+		*i = *i + 1;
+	}
+}
+
 void handle_operator(char *line, int *i, t_token **last_token, t_token **head)
 {
 	if (*line == '|')
@@ -129,7 +200,7 @@ void handle_operator(char *line, int *i, t_token **last_token, t_token **head)
 	else if (*line == '&')
 		handle_and(line, i,last_token,head);         // função que cria token AND (&&)
 	else if (*line == '<')
-		handle_redin(line,i,last_token,head);       // função que cria token REDIR_INPUT
+		handle_redin(line,i,last_token,head);       // função que cria token REDIR_INPUT (<)
 	else if (line[*i] == '>')
 		handle_redap_or_redout(line,i, last_token,head); // função que cria token REDIR_OUTPUT (>) ou REDIR_APPEND (>>)
 }
@@ -145,17 +216,16 @@ t_token	*tokenize(char* line)
 	last_token = NULL;
 	head = NULL;
  	i = 0;
-
-
+	//convem manter esta hierarquia de operacoes exemplo  grep &ola ,quero tratar &ola como palavra e nao separar em tokens
 	while(line[i] != 0)
 	{
 		if(is_space(line[i]))
 			skip_spaces(&line[i], &i);
 		else if(is_quote(line[i]))
 			handle_quote(&line[i],&i, &last_token, &head);
-		else if(is_operator(line[i]))
-			handle_operator(line[i],&i, &last_token, &head);
-		else if(is_letter(line[i]))
+		else if(is_operator(&line[i]))
+			handle_operator(&line[i],&i, &last_token, &head);
+		else
 			handle_word(&line[i],&i, &last_token, &head);
 	}
 	return (head);
