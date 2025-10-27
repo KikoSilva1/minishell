@@ -13,10 +13,6 @@
 //Concatenação implícita → "a"b'c' deve gerar um único token: abc.
 //
 //Subshells / parênteses → têm de ser reconhecidos como tokens próprios.
-
-
-
-
 //Aspas simples '...' e duplas "..." formam um único token mesmo com espaços ou operadores,
 //mas enquanto "..." permite expansão de variáveis e escapes, '...' é totalmente literal.
 
@@ -110,7 +106,7 @@ void	handle_word(char *line, int *i,t_token **last_token, t_token **head)
 	char	*str;
 
 	j = 1; //vou para o char seguinte apos a letra que encontrei
-	while(!is_operator(&line[j]) && !is_space(line[j]) && line[j] != '\0') //validar a mudanca no is_operator
+	while(!is_operator(&line[j]) && !is_space(line[j]) && line[j] != '\0') //validar a mudanca no is_operator, ver o que fazer se receber uma quote
 	{
 		j++;
 	}
@@ -172,8 +168,7 @@ void	handle_redin(char *line, int *i, t_token **last_token, t_token **head)
 }
 
 void	handle_redap_or_redout(char *line, int *i, t_token **last_token, t_token **head)
-{	if(ft_strlen(str) < 1) //neste caso nao crio token,
-		return;
+{
 	t_token *token;
 	char *str;
 
@@ -204,7 +199,6 @@ void handle_operator(char *line, int *i, t_token **last_token, t_token **head)
 	else if (line[*i] == '>')
 		handle_redap_or_redout(line,i, last_token,head); // função que cria token REDIR_OUTPUT (>) ou REDIR_APPEND (>>)
 }
-
 
 //por agora o trata espacos e aspas;
 t_token	*tokenize(char* line)
@@ -259,7 +253,5 @@ int	main(void)
 	}
 	return exit_status;
 }
-
-
 
 

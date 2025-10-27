@@ -20,6 +20,4 @@ void handle_and(char *line, int *i, t_token **last_token, t_token **head);      
 void handle_redin(char *line, int *i, t_token **last_token, t_token **head);       // função que cria token REDIR_INPUT
 void handle_redap_or_redout(char *line, int *i, t_token **last_token, t_token **head); // função que cria token REDIR_OUTPUT (>) ou REDIR_APPEND (>>)
 size_t	ft_strlen(const char *s);
-
-
 #endif
