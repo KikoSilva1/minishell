@@ -1,3 +1,6 @@
+#ifndef STRUCTS_H
+#define STRUCTS_H
+
 typedef enum e_token_type
 {
 	WORD,        // texto normal: comando, argumento, nome de arquivo
@@ -15,3 +18,6 @@ typedef struct s_token
 	t_token_type    type;     // tipo (WORD, PIPE, etc.)
 	struct s_token  *next;    // próximo token
 }	t_token;
+
+#endif
+

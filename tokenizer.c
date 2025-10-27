@@ -14,41 +14,13 @@
 //
 //Subshells / parênteses → têm de ser reconhecidos como tokens próprios.
 
-#include "structs.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <readline/readline.h>
-#include <readline/history.h>
+
 
 
 //Aspas simples '...' e duplas "..." formam um único token mesmo com espaços ou operadores,
 //mas enquanto "..." permite expansão de variáveis e escapes, '...' é totalmente literal.
-int	is_quote(char c)
-{
-	return(c == '\"' || c == '\'');
-}
-int is_single_quote(char c)
-{
-	return(c == '\'');
-}
-int	is_double_quote(char c)
-{
-	return(c == '\"');
-}
 
-void	*ft_memcpy(void *dst, const void *src, size_t n)
-{
-	unsigned char	*dst_cpy;
-	unsigned char	*src_cpy;
-
-	dst_cpy = (unsigned char *) dst;
-	src_cpy = (unsigned char *) src;
-	if (dst == (void *) 0 && src == (void *) 0)
-		return (dst);
-	while (n--)
-		*(dst_cpy++) = *(src_cpy++);
-	return (dst);
-}
+#include "minishell.h"
 
 size_t	get_quoted_size(char *line, char quote)
 {
@@ -63,11 +35,12 @@ size_t	get_quoted_size(char *line, char quote)
 	}
 	return(size);
 }
-t_token *create_token(char* value,int is_expandable)
+t_token *create_token(char* value, t_token_type type, int is_expandable) //esta funcao precisa de receber o type do token e atualizar o guardalo.
 {
 	t_token *token = malloc(sizeof(t_token));
 	if (!token)
 		return NULL; // falha na alocação
+	token ->type = type;
 	token->value = value;
 	token->expandable = is_expandable;
 	token->next = NULL;
@@ -109,24 +82,16 @@ void	create_quoted_node(t_token **last_token, t_token **head, char *line, char q
 		is_expandable = 0;
 
 	str = get_quoted_text(line,quote);
-	token = create_token(str, is_expandable);
+	token = create_token(str, WORD, is_expandable);
 	append_token(head,last_token,token);
 }
 
-void	handle_quote(int *in_quote,char *line, int *i,t_token **last_node, t_token **head)
+void	handle_quote(char *line, int *i,t_token **last_node, t_token **head)
 {
-	//em principio vou poder remover estes ifs
-	if(is_single_quote(*line))
-		*in_quote = 1;
-	if(is_double_quote(*line))
-		*in_quote = 2;
 	create_quoted_node(last_node,head,line,*line);
 	*i = *i + get_quoted_size(line,*line) + 2; //passar a frente o tento dentro das quotes e das prprias quotes
  }
-int	is_space(char c)
-{
-	return (c == ' ' || c == '\t' || c == '\v' || c == '\f' || c == '\r');
-}
+
 void	skip_spaces(char *line,int *i)
 {
 	int j;
@@ -135,11 +100,45 @@ void	skip_spaces(char *line,int *i)
 		j++;
 	*i = *i + j;
 }
+
+void	handle_word(char *line, int *i,t_token **last_token, t_token **head)
+{
+	int		j;
+	t_token	*token;
+	char	*str;
+
+	j = 1; //vou para o char seguinte apos a letra que encontrei
+	while(!is_operator(line[j]) && !is_space(line[j]) && line[j] != '\0')
+	{
+		j++;
+	}
+	//neste ponto line[j] e' um operador, espaco ou '\0'
+	// com j tava deslocado, tamanhao a copiar da str e' j
+	str = malloc((j + 1)*sizeof(char));
+	ft_memcpy(str, line, j); //ando line um char para a frente para nao copiar a aspa inicial
+	str[j] = '\0';
+	token = create_token(str, WORD, 1);
+	append_token(head,last_token,token);
+	//atualizar i (posicao na line)
+	*i = *i + j;
+}
+void handle_operator(char *line, int *i, t_token **last_token, t_token **head)
+{
+	if (*line == '|')
+		handle_pipe_or_or(line,i,last_token,head);  // função que vai criar token PIPE ou OR (||)
+	else if (*line == '&')
+		handle_and(line, i,last_token,head);         // função que cria token AND (&&)
+	else if (*line == '<')
+		handle_redin(line,i,last_token,head);       // função que cria token REDIR_INPUT
+	else if (line[*i] == '>')
+		handle_redap_or_redout(line,i, last_token,head); // função que cria token REDIR_OUTPUT (>) ou REDIR_APPEND (>>)
+}
+
+
 //por agora o trata espacos e aspas;
 t_token	*tokenize(char* line)
 {
 	int	i;
-	int in_quote; //1 in (') 2 in (")
 	t_token *last_token;
 	t_token *head;
 
@@ -153,11 +152,11 @@ t_token	*tokenize(char* line)
 		if(is_space(line[i]))
 			skip_spaces(&line[i], &i);
 		else if(is_quote(line[i]))
-			handle_quote(&in_quote,&line[i],&i, &last_token, &head);
-		//else if(is_operator(line[i]))
-		//	handle_operator(line[i],&i, &last_token, &head);
-		//else if(is_letter())
-		//	handle_word(line[i],&i, &last_token, &head);
+			handle_quote(&line[i],&i, &last_token, &head);
+		else if(is_operator(line[i]))
+			handle_operator(line[i],&i, &last_token, &head);
+		else if(is_letter(line[i]))
+			handle_word(&line[i],&i, &last_token, &head);
 	}
 	return (head);
 }
@@ -182,7 +181,7 @@ int	main(void)
 		tmp = head;
 		while(tmp)
 		{
-			printf("Token: \"%s\" | Expandable: %d\n", tmp->value, tmp ->expandable);
+			printf("Token: \"%s\"| type: %u | Expandable: %d\n", tmp->value, tmp->type, tmp ->expandable);
 			tmp = tmp->next;
 		}
 		//free_tokens(tokens);
