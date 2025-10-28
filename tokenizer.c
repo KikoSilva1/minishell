@@ -276,9 +276,13 @@ int	main(void)
 	t_token *head;
 	t_token *tmp;
 	int exit_status = 0;
+	char	*prompt;
+
+	prompt = malloc(sizeof(MAXPATHLEN));
+	getcwd(prompt, MAXPATHLEN);
 	while (1)
 	{
-		line = readline("minishell> ");
+		line = readline(prompt);
 		//add_history(line);
 		head = tokenize(line);
 		if (!head)
@@ -293,6 +297,8 @@ int	main(void)
 			printf("Token: \"%s\"| type: %s | Expandable: %d\n", tmp->value,  token_type_to_str(tmp->type), tmp ->expandable);
 			tmp = tmp->next;
 		}
+		check_builtins(head);
+		getcwd(prompt, MAXPATHLEN);
 		free_tokens(head);
 		free(line);
 	}

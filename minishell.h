@@ -1,11 +1,16 @@
 
 #ifndef MINISHELL_H
 #define MINISHELL_H
+
+
 #include "structs.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <readline/readline.h>
-#include <readline/history.h>
+# include <readline/readline.h>
+# include <readline/history.h>
+# include <sys/param.h>
+
+# include <unistd.h>
 
 int is_operator(char *line);
 int is_letter(char c);
@@ -20,4 +25,6 @@ void handle_and(char *line, int *i, t_token **last_token, t_token **head);      
 void handle_redin(char *line, int *i, t_token **last_token, t_token **head);       // função que cria token REDIR_INPUT
 void handle_redap_or_redout(char *line, int *i, t_token **last_token, t_token **head); // função que cria token REDIR_OUTPUT (>) ou REDIR_APPEND (>>)
 size_t	ft_strlen(const char *s);
+int	check_builtins(t_token *tokens);
+
 #endif
