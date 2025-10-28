@@ -24,11 +24,13 @@ size_t	get_quoted_size(char *line, char quote)
 
 	size = 0;
 	line++; //para passar a prmeira aspa a frente (so quero o conteudo)
-	while(*line != quote)
+	while(*line != quote && *line != '\0')
 	{
 		size++;
 		line++;
 	}
+	if(*line == '\0')
+		return (0);
 	return(size);
 }
 t_token *create_token(char* value, t_token_type type, int is_expandable) //esta funcao precisa de receber o type do token e atualizar o guardalo.
@@ -47,7 +49,7 @@ char *get_quoted_text(char *line,char quote)
 {
 	size_t size;
 	char *str;
-	size = get_quoted_size(line,quote);//validar este size primeiro, pode ser 0 e assim n faco nada
+	size = get_quoted_size(line,quote);//este size e' zero se a quote nao fechar ou se nao tiver nada dentro da quote
 	str = malloc((size + 1)*sizeof(char));
 	ft_memcpy(str, ++line, size); //ando line um char para a frente para nao copiar a aspa inicial
 	str[size] = '\0';
@@ -83,7 +85,8 @@ void	create_quoted_node(t_token **last_token, t_token **head, char *line, char q
 	token = create_token(str, WORD, is_expandable);
 	append_token(head,last_token,token);
 }
-
+// Not interpret unclosed quotes or special characters which are not required by the
+//subject such as \ (backslash) or ; (semicolon)
 void	handle_quote(char *line, int *i,t_token **last_node, t_token **head)
 {
 	create_quoted_node(last_node,head,line,*line);
@@ -106,7 +109,7 @@ void	handle_word(char *line, int *i,t_token **last_token, t_token **head)
 	char	*str;
 
 	j = 1; //vou para o char seguinte apos a letra que encontrei
-	while(!is_operator(&line[j]) && !is_space(line[j]) && line[j] != '\0') //validar a mudanca no is_operator, ver o que fazer se receber uma quote
+	while(!is_operator(&line[j]) && !is_space(line[j]) && line[j] != '\0' && !is_quote(line[j]) && line[j] != '-' ) //validar a mudanca no is_operator, ver o que fazer se receber uma quote
 	{
 		j++;
 	}
@@ -154,13 +157,20 @@ void	handle_and(char *line, int *i, t_token **last_token, t_token **head)
 		*i = *i + 2;
 	}
 }
-void	handle_redin(char *line, int *i, t_token **last_token, t_token **head)
+void	handle_redin_or_heredoc(char *line, int *i, t_token **last_token, t_token **head)
 {
 	t_token *token;
 	char *str;
-	if (*line == '<')
+	if (*(++line) == '<')
 	{
-		str = ft_strdup("<"); //faco strdup porque ate agora todos os values dos tokens foram dinamicamente alocadas
+		str = ft_strdup("<<"); //faco strdup porque ate agora todos os values dos tokens foram dinamicamente alocadas
+		token = create_token(str, HEREDOC, 1);
+		append_token(head,last_token,token);
+		*i = *i + 2;
+	}
+	else
+	{
+		str = ft_strdup("<");
 		token = create_token(str, REDIR_IN, 1);
 		append_token(head,last_token,token);
 		*i = *i + 1;
@@ -195,9 +205,9 @@ void handle_operator(char *line, int *i, t_token **last_token, t_token **head)
 	else if (*line == '&')
 		handle_and(line, i,last_token,head);         // função que cria token AND (&&)
 	else if (*line == '<')
-		handle_redin(line,i,last_token,head);       // função que cria token REDIR_INPUT (<)
-	else if (line[*i] == '>')
-		handle_redap_or_redout(line,i, last_token,head); // função que cria token REDIR_OUTPUT (>) ou REDIR_APPEND (>>)
+		handle_redin_or_heredoc(line,i,last_token,head);       // função que cria token REDIR_INPUT (<) ou ou HEREDOC (<<)
+	else if (*line == '>')
+		handle_redap_or_redout(line,i,last_token,head); // função que cria token REDIR_OUTPUT (>) ou REDIR_APPEND (>>)
 }
 
 //por agora o trata espacos e aspas;
@@ -224,6 +234,41 @@ t_token	*tokenize(char* line)
 	}
 	return (head);
 }
+void	free_tokens(t_token *head)
+{
+	t_token *tmp;
+	t_token *next_token;
+	tmp = head;
+	while(tmp)
+	{
+		next_token = tmp->next;
+		free(tmp -> value);
+		free(tmp);
+		tmp = next_token;
+	}
+}
+
+const char *token_type_to_str(t_token_type type)
+{
+	if (type == WORD)
+		return "WORD";
+	if (type == REDIR_IN)
+		return "REDIR_IN";
+	if (type == REDIR_OUT)
+		return "REDIR_OUT";
+	if (type == APPEND)
+		return "APPEND";
+	if (type == HEREDOC)
+		return "HEREDOC";
+	if (type == PIPE)
+		return "PIPE";
+	if (type == OR)
+		return "OR";
+	if (type == AND)
+		return "AND";
+	return "UNKNOWN";
+}
+
 
 int	main(void)
 {
@@ -245,10 +290,10 @@ int	main(void)
 		tmp = head;
 		while(tmp)
 		{
-			printf("Token: \"%s\"| type: %u | Expandable: %d\n", tmp->value, tmp->type, tmp ->expandable);
+			printf("Token: \"%s\"| type: %s | Expandable: %d\n", tmp->value,  token_type_to_str(tmp->type), tmp ->expandable);
 			tmp = tmp->next;
 		}
-		//free_tokens(tokens);
+		free_tokens(head);
 		free(line);
 	}
 	return exit_status;
