@@ -5,7 +5,7 @@ LDFLAGS = -lreadline
 
 NAME = minishell
 
-SRCS = tokenizer.c tokenizer_helpers.c builtins.c
+SRCS = tokenizer.c tokenizer_helpers.c
 
 OBJS = $(SRCS:.c=.o)
 
