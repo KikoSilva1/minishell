@@ -1,28 +1,69 @@
-CC = cc
-CFLAGS = -Wall -Wextra -Werror -g
-LDFLAGS = -lreadline
+# **************************************************************************** #
+#                                   MINISHELL                                  #
+# **************************************************************************** #
 
+# Nome do executável final
+NAME        = minishell
 
-NAME = minishell
+# Compilador e flags
+CC          = cc
+CFLAGS      = -Wall -Wextra -Werror -g -I. -ILibft
+LDFLAGS     = -lreadline
 
-SRCS = tokenizer.c tokenizer_helpers.c
+# Diretório e ficheiro da Libft
+LIBFT_DIR   = Libft
+LIBFT       = $(LIBFT_DIR)/libft.a
+
+# Ficheiros fonte e objetos
+
+SRCS = main.c \
+       tokenizer/tokenizer.c \
+       tokenizer/tokenizer_helpers.c \
+       tokenizer/memory.c \
+       tokenizer/type_handlers.c \
 
 OBJS = $(SRCS:.c=.o)
 
+
+# **************************************************************************** #
+#                                    RULES                                     #
+# **************************************************************************** #
+
+# Target padrão
 all: $(NAME)
 
-$(NAME): $(OBJS)
-	$(CC) $(CFLAGS) -o $(NAME) $(OBJS) $(LDFLAGS)
+# Compila o executável final
+$(NAME): $(OBJS) $(LIBFT)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBFT) $(LDFLAGS)
 
+# Compila a Libft (se ainda não estiver compilada)
+$(LIBFT):
+	$(MAKE) -C $(LIBFT_DIR)
+
+# Regra genérica: .c → .o
 %.o: %.c minishell.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# **************************************************************************** #
+#                                   CLEANUP                                    #
+# **************************************************************************** #
+
+# Apaga ficheiros objeto (.o)
 clean:
 	rm -f $(OBJS)
+	$(MAKE) -C $(LIBFT_DIR) clean      # limpa objetos da Libft também
 
+# Apaga tudo: objetos e executável
 fclean: clean
 	rm -f $(NAME)
+	$(MAKE) -C $(LIBFT_DIR) fclean    # limpa completamente a Libft
 
+# Limpa tudo e recompila
 re: fclean all
 
+# **************************************************************************** #
+#                                   EXTRAS                                     #
+# **************************************************************************** #
+
 .PHONY: all clean fclean re
+# .PHONY evita conflitos com ficheiros com esses nomes

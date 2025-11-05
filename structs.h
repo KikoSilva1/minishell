@@ -1,6 +1,7 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
+//---------------------------------------------------LISTA DE TOKENS--------------------------------------------------------
 typedef enum e_token_type
 {
 	WORD,        // texto normal: comando, argumento, nome de arquivo
@@ -20,6 +21,54 @@ typedef struct s_token
 	t_token_type    type;     // tipo (WORD, PIPE, etc.)
 	struct s_token  *next;    // próximo token
 }	t_token;
+//--------------------------------------------------------------------------------------------------------------------------
 
+//--------------------------------------------------------LISTA DE NODES-------------------------------------------------
+// os nodes serao utilizados para criar a AST, um node tanto pode ser um comando como um operador(&&, |, ||)
+
+// -------------------ESTRUTURA DA LISTA DE REDIRECTS-----------------------
+typedef enum e_redir_type
+{
+    R_INPUT,     // <
+    R_OUTPUT,    // >
+    R_APPEND,    // >>
+    R_HEREDOC    // <<
+}   t_redir_type;
+
+typedef struct s_redir
+{
+	t_redir_type	type;    // Tipo de redireção
+	char			*file;   // Nome do arquivo ou delimitador (no caso de heredoc)
+	struct s_redir	*next; // Próxima redireção
+}	t_redir;
+
+
+//-------------------ESTRUTURA DO COMANDO----------------------------------------
+typedef struct s_cmd
+{
+	char        *cmd_name;   // "ls"
+	char        **args;      // ["ls", "-l", NULL]
+	t_redir     *redirs;     // lista ligada de redireções
+}	t_cmd;
+
+//-------------------ESTRUTURA DO NODE--------------------------------------------
+
+typedef enum e_node_type
+{
+    NODE_CMD,      // comando (ex: ls -l)
+    NODE_PIPE,     // operador |
+    NODE_AND,      // operador &&
+    NODE_OR,       // operador ||
+}   t_node_type;
+
+typedef struct s_ast
+{
+	t_node_type type;    // tipo do nó (comando, pipe, etc)
+	struct s_ast *left;
+	struct s_ast *right;
+
+	t_cmd *cmd;          // ponteiro para a estrutura do comando (se for um comando, caso seja um operador aponta para NULL)
+}	t_ast;
+//---------------------------------------------------------------------------------
 #endif
 
