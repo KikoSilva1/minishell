@@ -12,13 +12,16 @@ typedef enum e_token_type
 	HEREDOC,      // <<
 	OR,
 	AND,
+	LPAREN,      // (
+	RPAREN,      // )
 }	t_token_type;
 
 typedef struct s_token
 {
+	int is_operator;
 	int	expandable; //0 - does not expand ,1 - expands
-	char            *value;   // conteúdo do token ("cat", ">", etc.)
-	t_token_type    type;     // tipo (WORD, PIPE, etc.)
+	char            *value;   // conteúdo do token \("cat", ">", etc.)
+	t_token_type    type;     // tipo \(WORD, PIPE, etc.)
 	struct s_token  *next;    // próximo token
 }	t_token;
 //--------------------------------------------------------------------------------------------------------------------------
@@ -38,7 +41,7 @@ typedef enum e_redir_type
 typedef struct s_redir
 {
 	t_redir_type	type;    // Tipo de redireção
-	char			*file;   // Nome do arquivo ou delimitador (no caso de heredoc)
+	char			*file;   // Nome do arquivo ou delimitador \(no caso de heredoc)
 	struct s_redir	*next; // Próxima redireção
 }	t_redir;
 
@@ -47,7 +50,7 @@ typedef struct s_redir
 typedef struct s_cmd
 {
 	char        *cmd_name;   // "ls"
-	char        **args;      // ["ls", "-l", NULL]
+	char        **args;      // \["ls", "-l", NULL]
 	t_redir     *redirs;     // lista ligada de redireções
 }	t_cmd;
 
@@ -55,7 +58,7 @@ typedef struct s_cmd
 
 typedef enum e_node_type
 {
-    NODE_CMD,      // comando (ex: ls -l)
+    NODE_CMD,      // comando \(ex: ls -l)
     NODE_PIPE,     // operador |
     NODE_AND,      // operador &&
     NODE_OR,       // operador ||
@@ -63,7 +66,7 @@ typedef enum e_node_type
 
 typedef struct s_ast
 {
-	t_node_type type;    // tipo do nó (comando, pipe, etc)
+	t_node_type type;    // tipo do nó \(comando, pipe, etc)
 	struct s_ast *left;
 	struct s_ast *right;
 

@@ -11,7 +11,11 @@ int is_operator(char *line)
 		return (1);
 	if (line[0] == '>' && line[1] == '>')  // ">>"
 		return (1);
-	//agora verifico os operadores simples
+	//agora verifico os operadores de um char
+	if (line[0] == ')')
+		return (1);
+	if (line[0] == '(')
+		return (1);
 	if (line[0] == '|' || line[0] == '<' || line[0] == '>' || line[0] == ';')
 		return (1);
 	return (0);

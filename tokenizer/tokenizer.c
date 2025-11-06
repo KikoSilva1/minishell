@@ -16,11 +16,12 @@ size_t	get_quoted_size(char *line, char quote)
 		return (0);
 	return(size);
 }
-t_token *create_token(char* value, t_token_type type, int is_expandable) //esta funcao precisa de receber o type do token e atualizar o guardalo.
+t_token *create_token(char* value, t_token_type type, int is_expandable, int is_op) //esta funcao precisa de receber o type do token e atualizar o guardalo.
 {
 	t_token *token = malloc(sizeof(t_token));
 	if (!token)
 		return NULL; // falha na alocação
+	token ->is_operator = is_op;
 	token ->type = type;
 	token->value = value;
 	token->expandable = is_expandable;
@@ -57,6 +58,9 @@ void	create_quoted_node(t_token **last_token, t_token **head, char *line, char q
 	char	*str;
 	t_token	*token;
 	int is_expandable;
+	int is_op;
+
+	is_op = 0;
 
 	is_expandable = 1;
 	if(is_single_quote(*line))
@@ -65,7 +69,7 @@ void	create_quoted_node(t_token **last_token, t_token **head, char *line, char q
 	str = get_quoted_text(line,quote);
 	if(ft_strlen(str) < 1) //neste caso nao crio token,
 		return;
-	token = create_token(str, WORD, is_expandable);
+	token = create_token(str, WORD, is_expandable, is_op);
 	append_token(head,last_token,token);
 }
 // Not interpret unclosed quotes or special characters which are not required by the
@@ -81,7 +85,7 @@ void	skip_spaces(char *line,int *i)
 }
 
 
-void handle_operator(char *line, int *i, t_token **last_token, t_token **head)
+void handle_ops_and_reds(char *line, int *i, t_token **last_token, t_token **head)
 {
 	if (*line == '|')
 		handle_pipe_or_or(line,i,last_token,head);  // função que vai criar token PIPE ou OR (||)
@@ -91,6 +95,8 @@ void handle_operator(char *line, int *i, t_token **last_token, t_token **head)
 		handle_redin_or_heredoc(line,i,last_token,head);       // função que cria token REDIR_INPUT (<) ou ou HEREDOC (<<)
 	else if (*line == '>')
 		handle_redap_or_redout(line,i,last_token,head); // função que cria token REDIR_OUTPUT (>) ou REDIR_APPEND (>>)
+	else if (*line == '(' || *line == ')')
+		handle_parentesis(line,i,last_token,head);
 }
 
 //por agora o trata espacos e aspas;
@@ -111,7 +117,7 @@ t_token	*tokenize(char* line)
 		else if(is_quote(line[i]))
 			handle_quote(&line[i],&i, &last_token, &head);
 		else if(is_operator(&line[i]))
-			handle_operator(&line[i],&i, &last_token, &head);
+			handle_ops_and_reds(&line[i],&i, &last_token, &head);
 		else
 			handle_word(&line[i],&i, &last_token, &head);
 	}

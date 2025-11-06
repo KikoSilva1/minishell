@@ -25,7 +25,7 @@ int     is_double_quote(char c);
 int     is_operator(char *line);
 
 /* ---------------- Funções de criação e manipulação de tokens ---------------- */
-t_token *create_token(char *value, t_token_type type, int is_expandable);
+t_token *create_token(char *value, t_token_type type, int is_expandable, int is_op);
 void    append_token(t_token **head, t_token **last_token, t_token *new_token);
 
 /* ---------------- Funções para lidar com aspas ---------------- */
@@ -38,11 +38,12 @@ void    handle_pipe_or_or(char *line, int *i, t_token **last_token, t_token **he
 void    handle_and(char *line, int *i, t_token **last_token, t_token **head);
 void    handle_redap_or_redout(char *line, int *i, t_token **last_token, t_token **head);
 void    handle_redin_or_heredoc(char *line, int *i, t_token **last_token, t_token **head);
+void	handle_parentesis(char *line, int *i, t_token **last_token, t_token **head);
 
 /* ---------------- Funções principais ---------------- */
 void    handle_quote(char *line, int *i, t_token **last_token, t_token **head);
 void    handle_word(char *line, int *i, t_token **last_token, t_token **head);
-void    handle_operator(char *line, int *i, t_token **last_token, t_token **head);
+void    handle_ops_and_reds(char *line, int *i, t_token **last_token, t_token **head);
 void    skip_spaces(char *line, int *i);
 t_token *tokenize(char *line);
 
