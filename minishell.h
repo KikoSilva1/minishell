@@ -49,6 +49,8 @@ t_token *tokenize(char *line);
 
 /* ---------------- Funções de Memoria---------------- */
 void	free_tokens(t_token *head);
-//--------------------------------------------------------------------------------------------------------------------------------
 
+//-----------------------------------------------------------CRIACAO DA LISTA DE COMANDOS E OPERADORES-------------------------------------------------------
+t_ast	*build_cmds_and_ops_list(t_token *head);
+void	create_op_node(t_token **tmp_token, t_ast **last_node);
 #endif

@@ -14,6 +14,7 @@ typedef enum e_token_type
 	AND,
 	LPAREN,      // (
 	RPAREN,      // )
+	CMD //este token_type e apenas utilizado em nodes, ate la todos os tokens que nao sao operadores nem redirecionamentos sao WORD
 }	t_token_type;
 
 typedef struct s_token
@@ -56,17 +57,10 @@ typedef struct s_cmd
 
 //-------------------ESTRUTURA DO NODE--------------------------------------------
 
-typedef enum e_node_type
-{
-    NODE_CMD,      // comando \(ex: ls -l)
-    NODE_PIPE,     // operador |
-    NODE_AND,      // operador &&
-    NODE_OR,       // operador ||
-}   t_node_type;
 
 typedef struct s_ast
 {
-	t_node_type type;    // tipo do nó \(comando, pipe, etc)
+	t_token_type type;    // tipo do nó \(comando, pipe, etc) usa o enum t_token_type mas apenas assume valores de operadores (e nao de redirecionamentos)
 	struct s_ast *left;
 	struct s_ast *right;
 

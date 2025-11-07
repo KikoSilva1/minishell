@@ -51,7 +51,7 @@ int	main(void)
 			printf("Token: \"%s\"| type: %s | Expandable: %d | is operator: %d \n", tmp->value,  token_type_to_str(tmp->type), tmp ->expandable, tmp->is_operator);
 			tmp = tmp->next;
 		}
-		//first_node = build_cmss_and_ops_list(head);
+		//first_node = build_cmds_and_ops_list(head);
 		free_tokens(head);
 		free(line);
 	}
