@@ -30,34 +30,103 @@ void	update_token_to_eval(t_token **tmp_token)
 {
 	while((*tmp_token))
 	{
-		if((*tmp_token) ->is_operator) //se emcontrar um operador atualiza tmp_token para a posisao desse operador
+		if((*tmp_token) ->is_operator) //se emcontrar um operador atualiza tmp_token para a posicao desse operador
 			return;
 		*tmp_token = (*tmp_token) -> next;
 	}
 	//se sair aqui, nao encontrou nenhum operador antes do fim entao acabou a construcao da lista (tmp_token = NULL)
 }
+
+// possible redirect types: < ,> ,>>, <<
 int	is_redirect_token(t_token *tmp_token)
 {
-	if(tmp_token -> value)
+	if(ft_strncmp(tmp_token -> value, ">>", 2) == 0)
+		return 1;
+	if(ft_strncmp(tmp_token -> value, "<<", 2) == 0)
+		return 1;
+	if(ft_strncmp(tmp_token -> value, ">", 1) == 0)
+		return 1;
+	if(ft_strncmp(tmp_token -> value, "<", 1) == 0)
+		return 1;
+	return 0;
+}
+
+void	handle_redirect_token(t_cmd *cmd,t_token **tmp_token, t_redir **redir_list_head, t_redir **redir_list_last)
+{
+	t_redir	*new_redir_node;
+
+	new_redir_node = malloc(sizeof(t_redir));
+	new_redir_node -> type = (*tmp_token) -> type;
+	new_redir_node -> file = (*tmp_token) -> next -> value; // o file name e o token a seguir ao token de redirect
+
+	if(*redir_list_head == NULL)//ainda nao existe head, este sera o primeiro redir_node
+	{
+		*redir_list_head = new_redir_node;
+		*redir_list_last = new_redir_node;
+	}
+	else
+	{
+		(*redir_list_last) -> next = new_redir_node;
+		(*redir_list_last) = new_redir_node;
+	}
+	//atualizo o token a avaliar (salto 2 tokens, o token do redir e o filename/end of file no caso do heredoc)
+	(*tmp_token) = (*tmp_token) -> next;
+	(*tmp_token) = (*tmp_token) -> next;
+}
+void	handle_arg_token(t_cmd *cmd, char **args, t_token **tmp_token,int *i)
+{
+	args[*i] = (*tmp_token) -> value;
+	*i = *i + 1;
+	if(cmd -> args == NULL) //quando encontro o primeiro args faco cmd -> args apontar para ele
+	{
+		cmd -> args = &args[0];
+	}
+	// atualizo o token a analizar
+	(*tmp_token) = (*tmp_token)->next;
+}
+int calculate_numb_of_args(t_token *tmp_token)//o primeiro token 'e sempre o node do comando, mas entra na lista de args porque o execve precisa dele na lista de args que recebe por param;
+{//nesta funcao altero a copia do ponteiro tmp_token entao na funcao create_cmd esta mudanca nao se vai refletir
+	int count;
+
+	count = 0;
+	while(tmp_token && tmp_token->is_operator == 0)//aqui vou guardar os args e os redirects;
+	{
+		if(is_redirect_token(tmp_token))//se encontrar um token de redirect passo dois tokens a frente (o de redirect e o filename)
+		{
+			tmp_token = tmp_token -> next;
+			tmp_token = tmp_token -> next;
+		}
+		else
+		{
+			count++;
+			tmp_token = tmp_token -> next;
+		}
+	}
+	return count;
 }
 t_cmd	*create_cmd(t_token *tmp_token)
 {
 	t_cmd	*cmd;
 	char	**args;
 	int		i;
-	int		j;
+	int		args_size;
+	t_redir	**redir_list_head; //ponderar fazer uma estrutura que engloba o head e o last das listas por ser um padrao recorrente e poupar linhas de codigo
+	t_redir	**redir_list_last;
 
-
+	i = 0;
+	*redir_list_head = NULL;
+	*redir_list_last = NULL;
+	args_size = calculate_numb_of_args(tmp_token);
+	args[args_size] = NULL;
+	args = malloc(args_size + 1 * sizeof(char*));
 	cmd = malloc(sizeof(t_cmd));
-	cmd ->cmd_name = tmp_token ->value; //o cmd name e sempre o primeiro token
-	tmp_token = tmp_token ->next;
-	while(tmp_token && tmp_token->is_operator == 0)//aqui vou guardar os args e os redirects;
+	cmd -> cmd_name = tmp_token ->value; //o cmd name e sempre o primeiro token, nao passo um token para a frente porque o cmd name tambem e guardado nos args
+	while(tmp_token && tmp_token->is_operator == 0)//aqui vou guardar os args e os redirects; atualizo o token a analizar dentro destas funcoes, se for redirect salto 2 tokens, no caso s ser arg salto 1
 	{
 		if(is_redirect_token(tmp_token))//se encontrar um token de redirect
-			handle_redirect_token(cmd);//vou adicionar a redirecao encontrada a lista de redirecoes
+			handle_redirect_token(cmd,&tmp_token, redir_list_head, redir_list_last);//vou adicionar a redirecao encontrada a lista de redirecoes
 		else // e um argumento
-			handle_arg_token(cmd);//guardo esse argumento na lista de argumentos
-		tmp_token = tmp_token -> next;
+			handle_arg_token(cmd, args,&tmp_token,&i);//guardo esse argumento na lista de argumentos
 	}
 	//chegamos ao fim dos tokens ou a um operador, retorno o comando criado
 	return cmd;
@@ -73,7 +142,7 @@ void	create_cmd_node(t_token **tmp_token,t_token *head, t_ast **first_node, t_as
 		*first_node = new_node;
 	append_node(new_node,*last_node);//ligo estes dois nodes e atualizo last_node
 	*last_node = new_node; // agora last_node aponta para o novo node que foi adicionado ao fim da lista
-	update_token_to_eval(tmp_token); //atualizar o proximo token a avaliar, (tenho de passar todos os tokens que pertencem a este CMD)
+	update_token_to_eval(tmp_token); //atualizar o proximo token a avaliar, (tenho de passar todos os tokens que pertencem a este CMD),
 }
 void	create_op_node(t_token **tmp_token, t_ast **last_node)//
 {
