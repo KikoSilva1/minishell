@@ -49,8 +49,32 @@ t_token *tokenize(char *line);
 
 /* ---------------- Funções de Memoria---------------- */
 void	free_tokens(t_token *head);
+/*------------------Funcoes Debug-------------------*/
+void	print_tokens(t_token *tmp);
+const char *token_type_to_str(t_token_type type);
 
-//-----------------------------------------------------------CRIACAO DA LISTA DE COMANDOS E OPERADORES-------------------------------------------------------
+//-----------------------------------------------------------CRIACAO DA LISTA DE COMANDOS E OPERADORES---------------------------------------------------
+//GERAIS
 t_ast	*build_cmds_and_ops_list(t_token *head);
 void	create_op_node(t_token **tmp_token, t_ast **last_node);
+t_ast	*create_node(t_token *token, t_cmd* cmd);
+void	append_node(t_ast *new_node,t_ast *last_node);
+
+//ESPECIFICAS DO NODE COMANDO
+void	create_cmd_node(t_token **tmp_token,t_token *head, t_ast **first_node, t_ast **last_node);
+t_cmd	*create_cmd(t_token *tmp_token);
+void	handle_arg_token(t_cmd *cmd, char **args, t_token **tmp_token,int *i);
+void	handle_redirect_token(t_cmd *cmd,t_token **tmp_token, t_redir **redir_list_head, t_redir **redir_list_last);
+void	update_token_to_eval(t_token **tmp_token);
+int		calculate_numb_of_args(t_token *tmp_token);
+int		is_redirect_token(t_token *tmp_token);
+
+//ESPECIFICAS NODE OPERADOR
+void	create_op_node(t_token **tmp_token, t_ast **last_node);
+
+//DEBUG
+void	print_nodes(t_ast *node);
+void	print_cmd(t_cmd *cmd);
+void	print_redirs(t_redir *redir);
+
 #endif

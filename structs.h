@@ -31,17 +31,10 @@ typedef struct s_token
 // os nodes serao utilizados para criar a AST, um node tanto pode ser um comando como um operador(&&, |, ||)
 
 // -------------------ESTRUTURA DA LISTA DE REDIRECTS-----------------------
-typedef enum e_redir_type
-{
-    R_INPUT,     // <
-    R_OUTPUT,    // >
-    R_APPEND,    // >>
-    R_HEREDOC    // <<
-}   t_redir_type;
 
 typedef struct s_redir
 {
-	t_redir_type	type;    // Tipo de redireção
+	t_token_type	type; // Tipo de redireção , e do tipo token_type mas so vai assumir valores de redirecoes
 	char			*file;   // Nome do arquivo ou delimitador \(no caso de heredoc)
 	struct s_redir	*next; // Próxima redireção
 }	t_redir;
